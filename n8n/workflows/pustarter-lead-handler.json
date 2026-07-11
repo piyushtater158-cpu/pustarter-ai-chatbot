@@ -1,0 +1,248 @@
+{
+  "name": "PUSTARTER Lead Handler",
+  "nodes": [
+    {
+      "id": "9ab8f2bc-cdfc-4905-9b52-aa23813ee2f7",
+      "name": "Lead Input",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        96
+      ],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "name": "message",
+              "type": "string"
+            },
+            {
+              "name": "session_id",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "8233edbb-a3e5-4003-aa8b-2843373c623e",
+      "name": "Insert Lead",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        224,
+        96
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "create",
+        "tableId": "leads",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $('Lead Input').item.json.name }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Lead Input').item.json.email }}"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "={{ $('Lead Input').item.json.message }}"
+            },
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $('Lead Input').item.json.session_id }}"
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "3f21ce29-62aa-4b37-b41f-54f880d9ed14",
+      "name": "Insert Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        96
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.error }}",
+              "operator": {
+                "type": "string",
+                "operation": "notExists"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b6c85146-ece2-443c-b4cf-c17eaa073765",
+      "name": "Notify Owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "piyushtater158@gmail.com",
+        "subject": "=New PUSTARTER lead: {{ $('Lead Input').item.json.name }}",
+        "emailType": "text",
+        "message": "=New lead captured by the PUSTARTER chatbot.\n\nName: {{ $('Lead Input').item.json.name }}\nEmail: {{ $('Lead Input').item.json.email }}\nInterest: {{ $('Lead Input').item.json.message }}\nSession: {{ $('Lead Input').item.json.session_id }}\n\nStored in Supabase (website-chatbot / leads).",
+        "options": {
+          "senderName": "PUSTARTER Chatbot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "0dfce35d-6dfb-4996-bfe9-da4e839f8e87"
+    },
+    {
+      "id": "0d9fa24d-9c77-4563-9c38-333ffdc39114",
+      "name": "Saved Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "st",
+              "name": "status",
+              "value": "saved",
+              "type": "string"
+            },
+            {
+              "id": "dt",
+              "name": "detail",
+              "value": "Lead stored and owner notified.",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b8388c17-af0d-4c90-9121-2de293a7e328",
+      "name": "Failed Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        192
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "st",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "dt",
+              "name": "detail",
+              "value": "={{ $json.error }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Lead Input": {
+      "main": [
+        [
+          {
+            "node": "Insert Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Lead": {
+      "main": [
+        [
+          {
+            "node": "Insert Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Notify Owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Failed Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Owner": {
+      "main": [
+        [
+          {
+            "node": "Saved Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "meta": {
+    "exportedBy": "sanitized export - pinData stripped",
+    "templateSource": "n8n template #10365 (customized)"
+  }
+}
