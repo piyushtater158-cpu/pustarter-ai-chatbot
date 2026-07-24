@@ -1,5 +1,5 @@
 {
-  "name": "PUSTARTER Lead Handler",
+  "name": "Piyush Tater Lead Handler",
   "nodes": [
     {
       "id": "9ab8f2bc-cdfc-4905-9b52-aa23813ee2f7",
@@ -28,6 +28,14 @@
             },
             {
               "name": "session_id",
+              "type": "string"
+            },
+            {
+              "name": "company",
+              "type": "string"
+            },
+            {
+              "name": "conversation",
               "type": "string"
             }
           ]
@@ -65,8 +73,18 @@
             {
               "fieldId": "session_id",
               "fieldValue": "={{ $('Lead Input').item.json.session_id }}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{ $('Lead Input').item.json.company }}"
             }
           ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "4bT354IooHMvUVQ7",
+          "name": "Supabase website-chatbot"
         }
       },
       "onError": "continueRegularOutput"
@@ -113,14 +131,20 @@
         "resource": "message",
         "operation": "send",
         "sendTo": "piyushtater158@gmail.com",
-        "subject": "=New PUSTARTER lead: {{ $('Lead Input').item.json.name }}",
+        "subject": "=New portfolio lead: {{ $('Lead Input').item.json.name }}",
         "emailType": "text",
-        "message": "=New lead captured by the PUSTARTER chatbot.\n\nName: {{ $('Lead Input').item.json.name }}\nEmail: {{ $('Lead Input').item.json.email }}\nInterest: {{ $('Lead Input').item.json.message }}\nSession: {{ $('Lead Input').item.json.session_id }}\n\nStored in Supabase (website-chatbot / leads).",
+        "message": "=New lead captured by the Piyush Tater portfolio chatbot.\n\nName: {{ $('Lead Input').item.json.name }}\nEmail: {{ $('Lead Input').item.json.email }}\nCompany: {{ $('Lead Input').item.json.company }}\nInterest: {{ $('Lead Input').item.json.message }}\nSession: {{ $('Lead Input').item.json.session_id }}\n\n--- Conversation so far ---\n{{ $('Lead Input').item.json.conversation }}\n\nStored in Supabase (website-chatbot / leads).",
         "options": {
-          "senderName": "PUSTARTER Chatbot"
+          "senderName": "Piyush Tater Chatbot"
         }
       },
-      "onError": "continueRegularOutput",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "aeZ7kmg11tgaIQKx",
+          "name": "Google Gmail OAuth2"
+        }
+      },
+      "onError": "continueErrorOutput",
       "webhookId": "0dfce35d-6dfb-4996-bfe9-da4e839f8e87"
     },
     {
@@ -182,6 +206,36 @@
           ]
         }
       }
+    },
+    {
+      "id": "e2c1a4f7-1b3d-4a9e-8c5f-6d7a8b9c0d1e",
+      "name": "Email Failed Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        192
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "st",
+              "name": "status",
+              "value": "saved",
+              "type": "string"
+            },
+            {
+              "id": "dt",
+              "name": "detail",
+              "value": "Lead stored. Owner email notification failed — check Gmail credential.",
+              "type": "string"
+            }
+          ]
+        }
+      }
     }
   ],
   "connections": {
@@ -233,6 +287,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Email Failed Response",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }
@@ -242,7 +303,7 @@
     "availableInMCP": true
   },
   "meta": {
-    "exportedBy": "sanitized export - pinData stripped",
-    "templateSource": "n8n template #10365 (customized)"
+    "exportedBy": "lead-email-fix.mjs",
+    "exportedAt": "2026-07-24T13:49:01.777Z"
   }
 }
